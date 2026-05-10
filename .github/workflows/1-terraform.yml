@@ -2,7 +2,7 @@ name: 1 — Terraform Plan & Apply
 
 on:
   push:
-    branches: [main]
+    branches: [mainn]
 
 env:
   AWS_REGION: us-east-1
