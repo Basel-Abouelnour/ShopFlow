@@ -1,0 +1,45 @@
+name: 3 — Smoke Test
+
+on:
+  workflow_run:
+    workflows: ["2 — Docker Build & Push"]   # must match name: above exactly
+    types: [completed]
+    branches: [main]
+
+env:
+  AWS_REGION: us-east-1
+  TF_WORKING_DIR: ./terraform
+
+jobs:
+  smoke-test:
+    name: Smoke Test
+    runs-on: ubuntu-latest
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+
+      - name: Get ALB DNS from Terraform outputs
+        id: tf-outputs
+        working-directory: ${{ env.TF_WORKING_DIR }}
+        run: |
+          terraform init -reconfigure
+          # REPLACE with your actual output name
+          echo "alb_dns=$(terraform output -raw <ALB_DNS_OUTPUT_NAME>)" >> $GITHUB_OUTPUT
+
+      - name: Wait for EC2 to pull image and start
+        run: sleep 30
+
+      - name: Hit the ALB
+        run: |
+          curl --fail http://${{ steps.tf-outputs.outputs.alb_dns }} || exit 1
