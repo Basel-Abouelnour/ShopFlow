@@ -3,3 +3,4 @@
 *.tfstate.*
 
 awsCred
+src/.env
