@@ -14,6 +14,11 @@ module "iam" {
   source = "./modules/iam"
   
 }
+module "ecr" {
+  source = "./modules/ecr"
+  # ECR repository configuration
+ # Allow mutable tags for development
+}
 # module "security" {
 #   source = "./modules/security"
 #   # Security group configuration
