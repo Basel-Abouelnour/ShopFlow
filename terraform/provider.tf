@@ -1,13 +1,13 @@
+# main.tf
+provider "aws" {
+  region  = "us-east-1"
+
+}
 terraform {
-  required_providers {
-    aws = {
-      source  = "hashicorp/aws"
-      version = "~> 6.0"
-    }
+  backend "s3" {
+    bucket = "showflow-terraform-state"  # Match your bucket name
+    key    = "terraform.tfstate"              # Path to state file in bucket
+    region = "us-east-1"                      # Match your bucket’s region
   }
 }
 
-# Configure the AWS Provider
-provider "aws" {
-  region = "us-east-1"
-}
