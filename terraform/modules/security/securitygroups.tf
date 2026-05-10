@@ -1,31 +1,45 @@
-resource "aws_security_group" "this" {
-  name        = var.sg_name
-  description = "Security group for ${var.sg_name}"
+# 1. Public Security Group (For ALB)
+resource "aws_security_group" "alb_sg" {
+  name        = "public-alb-sg"
+  description = "Allow HTTP inbound traffic from the internet"
   vpc_id      = var.vpc_id
-  # Dynamic ingress rules (inbound)
-  dynamic "ingress" {
-    for_each = var.ingress_rules
-    content {
-      from_port   = ingress.value.from_port
-      to_port     = ingress.value.to_port
-      protocol    = ingress.value.protocol
-      cidr_blocks = ingress.value.cidr_blocks
-    }
+
+  ingress {
+    description = "HTTP from anywhere"
+    from_port   = 80
+    to_port     = 80
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
   }
 
-  # Dynamic egress rules (outbound) - Added!
-  dynamic "egress" {
-    for_each = var.egress_rules
-    content {
-      from_port   = egress.value.from_port
-      to_port     = egress.value.to_port
-      protocol    = egress.value.protocol
-      cidr_blocks = egress.value.cidr_blocks
-    }
-  }
-
-  tags = {
-    Name = var.sg_name
+  egress {
+    description = "Allow all outbound traffic"
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    cidr_blocks = ["0.0.0.0/0"]
   }
 }
 
+# 2. Private Security Group (For EC2 in ASG)
+resource "aws_security_group" "ec2_sg" {
+  name        = "private-ec2-sg"
+  description = "Allow HTTP inbound traffic ONLY from ALB"
+  vpc_id      = var.vpc_id
+
+  ingress {
+    description     = "HTTP from ALB"
+    from_port       = 80
+    to_port         = 80
+    protocol        = "tcp"
+    security_groups = [aws_security_group.alb_sg.id] 
+  }
+
+  egress {
+    description = "Allow all outbound traffic"
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+}

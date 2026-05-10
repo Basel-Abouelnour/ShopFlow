@@ -1,12 +1,8 @@
-output "instance_ids" {
-  description = "List of private IPs for created instances"
-  value       = aws_instance.this[*].id
+output "alb_dns_name" {
+  description = "The DNS name of the Application Load Balancer"
+  value       = aws_lb.web_alb.dns_name
 }
-output "instance_public_ip" {
-  description = "List of public IP for created instances"
-  value       = aws_instance.this[*].public_ip
+output "asg_name" {
+  description = "The name of the Auto Scaling Group"
+  value       = aws_autoscaling_group.web_asg.name
 }
-output "instance_private_ips" {
-  description = "List of private IPs for created instances"
-  value       = aws_instance.this[*].private_ip
-}   
