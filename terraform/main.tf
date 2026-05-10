@@ -10,7 +10,10 @@ module "network" {
   public_rtable_tagname  = "public-route-table"
   private_rtable_tagname = "private-route-table"
 }
-
+module "iam" {
+  source = "./modules/iam"
+  
+}
 # module "security" {
 #   source = "./modules/security"
 #   # Security group configuration
