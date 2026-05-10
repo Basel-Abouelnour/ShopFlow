@@ -1,0 +1,107 @@
+name: 2 — Docker Build & Push & Deploy
+
+on:
+  workflow_run:
+    workflows: ["1 — Terraform Plan & Apply"]
+    types: [completed]
+    branches: [main]
+
+env:
+  AWS_REGION: us-east-1
+  TF_WORKING_DIR: ./terraform
+
+jobs:
+  docker-build-push:
+    name: Docker Build & Push
+    runs-on: ubuntu-latest
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+
+      - name: Get outputs from Terraform
+        id: tf-outputs
+        working-directory: ${{ env.TF_WORKING_DIR }}
+        run: |
+          terraform init -reconfigure
+          # REPLACE with your actual output names
+          echo "ecr_url=$(terraform output -raw <ECR_REGISTRY_OUTPUT_NAME>)" >> $GITHUB_OUTPUT
+          echo "asg_name=$(terraform output -raw <ASG_NAME_OUTPUT_NAME>)"    >> $GITHUB_OUTPUT
+
+      - name: Login to Amazon ECR
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Build, tag, and push image
+        env:
+          ECR_REGISTRY: ${{ steps.tf-outputs.outputs.ecr_url }}
+          IMAGE_TAG: ${{ github.sha }}
+        run: |
+          docker build -t $ECR_REGISTRY:$IMAGE_TAG .
+          docker push $ECR_REGISTRY:$IMAGE_TAG
+          docker tag $ECR_REGISTRY:$IMAGE_TAG $ECR_REGISTRY:latest
+          docker push $ECR_REGISTRY:latest
+
+  deploy:
+    name: Deploy — Refresh ASG
+    runs-on: ubuntu-latest
+    needs: docker-build-push
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+
+      - name: Get ASG name from Terraform outputs
+        id: tf-outputs
+        working-directory: ${{ env.TF_WORKING_DIR }}
+        run: |
+          terraform init -reconfigure
+          # REPLACE with your actual output name
+          echo "asg_name=$(terraform output -raw <ASG_NAME_OUTPUT_NAME>)" >> $GITHUB_OUTPUT
+
+      - name: Trigger ASG instance refresh
+        run: |
+          aws autoscaling start-instance-refresh \
+            --auto-scaling-group-name ${{ steps.tf-outputs.outputs.asg_name }} \
+            --preferences '{"MinHealthyPercentage": 50}'
+
+      - name: Wait for refresh to complete
+        run: |
+          echo "Waiting for instance refresh to complete..."
+          aws autoscaling wait \
+            --auto-scaling-group-name ${{ steps.tf-outputs.outputs.asg_name }} \
+            || true
+          # Poll until refresh is done
+          while true; do
+            STATUS=$(aws autoscaling describe-instance-refreshes \
+              --auto-scaling-group-name ${{ steps.tf-outputs.outputs.asg_name }} \
+              --query 'InstanceRefreshes[0].Status' \
+              --output text)
+            echo "Current status: $STATUS"
+            if [ "$STATUS" = "Successful" ]; then
+              echo "Refresh complete!"
+              break
+            elif [ "$STATUS" = "Failed" ] || [ "$STATUS" = "Cancelled" ]; then
+              echo "Refresh failed!"
+              exit 1
+            fi
+            sleep 30
+          done
