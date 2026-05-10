@@ -9,6 +9,18 @@ env:
   TF_WORKING_DIR: ./terraform
 
 jobs:
+  lint:
+    name: Lint & Test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Run tests
+        run: |
+          # ADD YOUR COMMAND HERE
+          # python: pip install -r requirements.txt && pytest
+          # node:   npm install && npm test
+          echo "no tests yet"
+
   terraform-plan:
     name: Terraform Plan
     runs-on: ubuntu-latest
@@ -86,4 +98,4 @@ jobs:
         run: |
           # REPLACE with your actual output names
           echo "ecr_url=$(terraform output -raw <ECR_REGISTRY_OUTPUT_NAME>)" >> $GITHUB_OUTPUT
-          echo "alb_dns=$(terraform output -raw <ALB_DNS_OUTPUT_NAME>)" >> $GITHUB_OUTPUT
+          echo "alb_dns=$(terraform output -raw <ALB_DNS_OUTPUT_NAME>)"      >> $GITHUB_OUTPUT
