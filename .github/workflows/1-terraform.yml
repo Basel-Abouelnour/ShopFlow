@@ -2,7 +2,7 @@ name: 1 — Terraform Plan & Apply
 
 on:
   push:
-    branches: [mainn]
+    branches: [main]
 
 env:
   AWS_REGION: us-east-1
@@ -16,9 +16,6 @@ jobs:
       - uses: actions/checkout@v4
       - name: Run tests
         run: |
-          # ADD YOUR COMMAND HERE
-          # python: pip install -r requirements.txt && pytest
-          # node:   npm install && npm test
           echo "no tests yet"
 
   terraform-plan:
@@ -48,7 +45,7 @@ jobs:
 
       - name: Terraform plan
         working-directory: ${{ env.TF_WORKING_DIR }}
-        run: terraform plan -out=tfplan
+        run: terraform plan -var="image_tag=skip" -out=tfplan
 
       - name: Upload plan artifact
         uses: actions/upload-artifact@v4
@@ -61,9 +58,6 @@ jobs:
     runs-on: ubuntu-latest
     needs: terraform-plan
     environment: prod
-    outputs:
-      ecr_url: ${{ steps.tf-outputs.outputs.ecr_url }}
-      alb_dns: ${{ steps.tf-outputs.outputs.alb_dns }}
 
     steps:
       - uses: actions/checkout@v4
@@ -91,11 +85,3 @@ jobs:
       - name: Terraform apply
         working-directory: ${{ env.TF_WORKING_DIR }}
         run: terraform apply -auto-approve tfplan
-
-      - name: Capture Terraform outputs
-        id: tf-outputs
-        working-directory: ${{ env.TF_WORKING_DIR }}
-        run: |
-          # REPLACE with your actual output names
-          echo "ecr_url=$(terraform output -raw <ECR_REGISTRY_OUTPUT_NAME>)" >> $GITHUB_OUTPUT
-          echo "alb_dns=$(terraform output -raw <ALB_DNS_OUTPUT_NAME>)"      >> $GITHUB_OUTPUT
