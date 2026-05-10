@@ -1,0 +1,33 @@
+main: CI/CD with Terraform
+on:
+  push:
+    branches:
+      - main
+jobs:
+  terraform:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Set up Terraform
+        uses: hashicorp/setup-terraform@v4
+        with:
+          terraform_version: 1.14.6
+
+      - name: Terraform Initialize
+        run: terraform init
+
+      - name: Terraform Plan
+        run: terraform plan
+
+      - name: Terraform Apply
+        run: |
+          cd terraform/
+          terraform apply -auto-approve
+
+      - name: Terraform Output
+        run: |
+          cd terraform/
+          terraform output
+      
