@@ -3,7 +3,7 @@ resource "aws_nat_gateway" "main-ng" {
         Name = var.ngw_tagname
     }
   allocation_id = aws_eip.ngw-eip.id
-  subnet_id = aws_subnet.public-subnet.id
+  subnet_id = aws_subnet.public_1.id
 }
 resource "aws_eip" "ngw-eip" {
     tags = {

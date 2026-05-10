@@ -11,56 +11,26 @@ module "network" {
   private_rtable_tagname = "private-route-table"
 }
 
-# module "security" {
-#   source = "./modules/security"
-#   # Security group configuration
-#   vpc_id  = module.network.vpc_id
-#   sg_name = "allow_ssh_http"
+module "security" {
+  source = "./modules/security"
 
-#   ingress_rules = [
-#     {
-#       from_port   = 22 # SSH
-#       to_port     = 22
-#       protocol    = "tcp"
-#       cidr_blocks = ["0.0.0.0/0"] # Warning: Open to the world (restrict in production!)
-#     },
-#     {
-#       from_port   = 80 # HTTP
-#       to_port     = 80
-#       protocol    = "tcp"
-#       cidr_blocks = ["0.0.0.0/0"]
-#     }
-#   ]
-#   # Egress rules (outbound traffic) - Added!
-#   egress_rules = [
-#     {
-#       from_port   = 0 # Allow ALL outbound traffic by default
-#       to_port     = 0
-#       protocol    = "-1" # All protocols
-#       cidr_blocks = ["0.0.0.0/0"]
-#     }
-#   ]
-#   # ssh_key_pair = "ssh-key-network-app"
-#   # ssh_key_path = "."
-# }
+  # Fix: Use the exact name of the output block
+  vpc_id = module.network.vpc_id 
+}
+module "compute" {
+  source = "./modules/compute"
 
-# module "compute" {
-#   source = "./modules/compute"
-#   # EC2 instance configuration
-#   ec2_instance = [
-#     # Instance 1: Public web server
-#     {
-#       name               = "web-server",
-#       ami                = "ami-084568db4383264d4",
-#       instance_type      = "t2.micro",
-#       subnet_id          = module.network.public_subnet_ids[0],
-#       assign_public_ip   = true,                               # <-- Enable public IP
-#       security_group_ids = [module.security.security_group_id] # Attach SG
-#       # user_data        = file("${path.module}/user.sh"),  # Optional user data script
-#       key_name = "my-key" # Optional SSH key
-#     }
-#   ]
+  # Replace these with your actual pre-configured network IDs
+  vpc_id         = module.network.vpc_id
 
-# }
-
+  alb_subnet_ids = module.network.public_subnet_ids
+  asg_subnet_ids = module.network.private_subnet_ids
+# Pass outputs from the Security module
+  alb_security_group_ids = [module.security.alb_sg_id]
+  ec2_security_group_ids = [module.security.ec2_sg_id]
   
+  # Replace with a valid AMI ID for your region (e.g., Amazon Linux 2023)
+  ami_id                 = "ami-0c94855ba95c71c99" 
+  instance_type          = "t3.micro"
+}
+

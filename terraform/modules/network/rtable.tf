@@ -16,13 +16,28 @@ resource "aws_route_table" "private" {
   }
 }
 # Associate public subnets with the route table
-resource "aws_route_table_association" "public" {
-  subnet_id      = aws_subnet.public-subnet.id
-  route_table_id = aws_route_table.public.id
-}
-# Associate private subnets with the route table
-resource "aws_route_table_association" "private" {
+# modules/network/rtable.tf
 
-  subnet_id      = aws_subnet.private-subnet.id
-  route_table_id = aws_route_table.private.id
+# --- Public Route Table Associations ---
+resource "aws_route_table_association" "public_1" {
+  subnet_id      = aws_subnet.public_1.id
+  # NOTE: Keep your existing route_table_id variable name here
+  route_table_id = aws_route_table.public.id # Change if your RT has a different name
+}
+
+resource "aws_route_table_association" "public_2" {
+  subnet_id      = aws_subnet.public_2.id
+  route_table_id = aws_route_table.public.id # Change if your RT has a different name
+}
+
+# --- Private Route Table Associations ---
+resource "aws_route_table_association" "private_1" {
+  subnet_id      = aws_subnet.private_1.id
+  # NOTE: Keep your existing route_table_id variable name here
+  route_table_id = aws_route_table.private.id # Change if your RT has a different name
+}
+
+resource "aws_route_table_association" "private_2" {
+  subnet_id      = aws_subnet.private_2.id
+  route_table_id = aws_route_table.private.id # Change if your RT has a different name
 }

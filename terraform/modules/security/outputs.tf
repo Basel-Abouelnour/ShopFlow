@@ -1,12 +1,9 @@
-output "security_group_id" {
-  description = "ID of the created security group"
-  value       = aws_security_group.this.id
+output "alb_sg_id" {
+  description = "The ID of the ALB Security Group"
+  value       = aws_security_group.alb_sg.id
 }
-# output "ssh_key_pair_path" {
-#   description = "Path to the SSH key pair"
-#   value       = "${var.ssh_key_path}/${var.ssh_key_pair}.pem"
-# }
-# output "ssh_key_pair_name" {
-#   description = "Name of the SSH key pair"
-#   value       = aws_key_pair.generated_key.key_name
-# }
+
+output "ec2_sg_id" {
+  description = "The ID of the EC2 Security Group"
+  value       = aws_security_group.ec2_sg.id
+}

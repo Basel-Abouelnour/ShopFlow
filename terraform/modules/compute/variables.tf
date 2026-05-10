@@ -1,15 +1,35 @@
-variable ec2_instance {
-  description = "List of EC2 instances to create"
-  type = list(object({
-    name               = string                # Unique name for each instance
-    ami                = string                # Custom AMI per instance
-    instance_type      = string                # Custom instance type
-    subnet_id          = string                # Subnet placement
-    assign_public_ip   = optional(bool, false) # Add public IP?
-    security_group_ids = list(string)          # List of security group IDs
-    user_data          = optional(string, "")  # Optional user data script
-    key_name           = optional(string, "")  # Optional SSH key
-  }))
-
+variable "vpc_id" {
+  description = "The ID of the VPC"
+  type        = string
 }
 
+variable "alb_subnet_ids" {
+  description = "List of public subnet IDs for the ALB"
+  type        = list(string)
+}
+
+variable "asg_subnet_ids" {
+  description = "List of subnet IDs for the EC2 instances (private or public)"
+  type        = list(string)
+}
+
+variable "alb_security_group_ids" {
+  description = "Security groups for the ALB (should allow port 80/443 from internet)"
+  type        = list(string)
+}
+
+variable "ec2_security_group_ids" {
+  description = "Security groups for EC2 instances (should allow port 80 from ALB SG)"
+  type        = list(string)
+}
+
+variable "ami_id" {
+  description = "AMI ID for the EC2 instances"
+  type        = string
+}
+
+variable "instance_type" {
+  description = "EC2 instance type"
+  type        = string
+  default     = "t2.micro"
+}

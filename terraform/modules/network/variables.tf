@@ -14,28 +14,32 @@ variable "vpc_reagion" {
   description = "provide a region for the vpc"
 }
 
-
 variable "public_subnet_name" {
   type        = string
   default     = "public-subnet"
-  description = "provide a tag name for the public subnet"
+  description = "Base tag name for the public subnets"
 }
+
 variable "private_subnet_name" {
   type        = string
   default     = "private-subnet"
-  description = "provide a tag name for the private subnet"
+  description = "Base tag name for the private subnets"
 }
 
-variable "public_subnet_cidr" {
-  type        = string
-  default     = "10.0.1.0/24"
-  description = "provide a cidr for the public subnet"
+# CHANGED to a list so each subnet gets a unique range
+variable "public_subnet_cidrs" {
+  type        = list(string)
+  default     = ["10.0.1.0/24", "10.0.2.0/24"]
+  description = "List of CIDR blocks for the public subnets"
 }
-variable "private_subnet_cidr" {
-  type        = string
-  default     = "10.0.2.0/24"
-  description = "provide a cidr for the private subnet"
+
+# CHANGED to a list to support two private subnets
+variable "private_subnet_cidrs" {
+  type        = list(string)
+  default     = ["10.0.3.0/24", "10.0.4.0/24"]
+  description = "List of CIDR blocks for the private subnets"
 }
+
 variable "availability_zones" {
   description = "AZs to distribute subnets across"
   type        = list(string)
